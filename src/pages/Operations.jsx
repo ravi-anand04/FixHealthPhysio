@@ -1,5 +1,5 @@
 // Patient.js
-import { Button, Card, Dropdown, Tabs } from "flowbite-react";
+import { Button, Card, Dropdown, Tabs, Textarea } from "flowbite-react";
 
 import { Swiper as SwiperComponent, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination, Autoplay } from "swiper/modules";
@@ -8,41 +8,9 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 
-import React, { useEffect, useState } from "react";
+import React, { useRef, useState } from "react";
 import { dates, physios } from "../constant";
-
-// Function to generate an array of time objects
-const generateTimeArray = (start, end) => {
-  const startTime = new Date();
-  startTime.setHours(start, 0, 0, 0); // Set start time to 8:00 am
-
-  const endTime = new Date();
-  endTime.setHours(end, 0, 0, 0); // Set end time to 12:00 pm
-
-  const timeArray = [];
-
-  // Loop through the time intervals with a 15-minute gap
-  for (
-    let currentTime = startTime;
-    currentTime < endTime;
-    currentTime.setMinutes(currentTime.getMinutes() + 15)
-  ) {
-    // Format the time as a string (12-hour clock with AM/PM)
-    const formattedTime = currentTime.toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
-
-    // Create an object with the formatted time
-    const timeObject = { time: formattedTime };
-
-    // Add the object to the array
-    timeArray.push(timeObject);
-  }
-
-  return timeArray;
-};
+import { generateTimeArray } from "../utils/generateTimeArray";
 
 const Patient = () => {
   const [selectedDate, setSelectedDate] = useState("");
@@ -51,7 +19,8 @@ const Patient = () => {
   const [timeOfDay, setTimeOfDay] = useState("morning");
   const [confirmed, setConfirmed] = useState(false);
 
-  useEffect(() => {}, [selectedDate]);
+  const tabsRef = useRef(null);
+  const [activeTab, setActiveTab] = useState(0);
 
   const [slots, setSlots] = useState({
     morning: [],
@@ -61,17 +30,18 @@ const Patient = () => {
 
   const handleClick = (date) => {
     setSelectedDate(date);
+    changePhysio(selectedPhysio);
   };
 
   const changePhysio = (name) => {
     const currentPhysio = physios.find((physio) => physio.name === name);
-    const currentPhysioSlots = currentPhysio.slots.find(
+    const currentPhysioSlots = currentPhysio?.slots?.find(
       (slot) => slot.date === selectedDate
     );
-    console.log("William slots", currentPhysioSlots);
+    // console.log("William slots", currentPhysioSlots);
 
-    const start = currentPhysioSlots.start;
-    const end = currentPhysioSlots.end;
+    const start = currentPhysioSlots?.start;
+    const end = currentPhysioSlots?.end;
 
     let morningSlots = [];
     let afternoonSlots = [];
@@ -120,8 +90,10 @@ const Patient = () => {
   };
 
   return (
-    <div className="px-48 max-lg:px-12 mt-6">
-      <h2 className="text-2xl font-bold mb-8">Operations Team View</h2>
+    <div className="px-48 max-lg:px-12 mt-6 max-sm:px-2">
+      <h2 className="text-2xl font-bold mb-8 border-l-4 border-yellow-300 pl-2">
+        Operations
+      </h2>
       {/* <h1 className="text-lg text-center font-semibold">
         Book your Physio appointments
       </h1> */}
@@ -173,7 +145,6 @@ const Patient = () => {
         </SwiperComponent>
       </div>
       <div className="select-employee mt-6">
-        
         <Dropdown
           label={selectedPhysio ? selectedPhysio : "Select Physio"}
           // dismissOnClick={false}
@@ -189,7 +160,11 @@ const Patient = () => {
             </Dropdown.Item>
           ))}
         </Dropdown>
-        {!selectedDate && (<h1 className="text-red-500 text-sm font-semibold mt-2 ml-4">Select date first</h1>)}  
+        {!selectedDate && (
+          <h1 className="text-red-500 text-sm font-semibold mt-2 ml-4">
+            Select date first
+          </h1>
+        )}
       </div>
       {selectedPhysio && (
         <div className="slots mt-12">
@@ -197,6 +172,8 @@ const Patient = () => {
             aria-label="Default tabs"
             style="default"
             className="flex justify-evenly"
+            ref={tabsRef}
+            onActiveTabChange={(tab) => setActiveTab(tab)}
           >
             <Tabs.Item title="Consultation Slot">
               <div className="flex flex-wrap gap-4 justify-center">
@@ -230,69 +207,88 @@ const Patient = () => {
                       : "bg-white text-black"
                   }  hover:opacity-90 px-12`}
                   color="light"
+                  key={new Date()}
                 >
                   Evening
                 </Button>
               </div>
               <div className="slots">
                 <div className="morning-slots flex flex-wrap justify-center gap-2 mt-8">
-                  {timeOfDay === "morning" && slots.morning == [] ? (
-                    <h1>Sorry, No slots available !</h1>
+                  {timeOfDay === "morning" ? (
+                    slots.morning.length === 0 ? (
+                      <h1>Sorry, no slots available</h1>
+                    ) : (
+                      slots.morning.map((slot) => (
+                        <Button
+                          className={`${
+                            selectedTime === slot.time
+                              ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:opacity-90 text-white"
+                              : "bg-white text-black border-black-500 hover:bg-stone-400"
+                          }`}
+                          color="light"
+                          key={Math.random() * 10}
+                          onClick={() => setSelectedTime(slot.time)}
+                        >
+                          {slot.time}
+                        </Button>
+                      ))
+                    )
                   ) : (
-                    slots.morning.map((slot) => (
-                      <Button
-                        className={`${
-                          selectedTime === slot.time
-                            ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:opacity-90"
-                            : "bg-white text-black border-black-500 hover:bg-stone-400"
-                        }`}
-                        color="light"
-                        onClick={() => setSelectedTime(slot.time)}
-                      >
-                        {slot.time}
-                      </Button>
-                    ))
+                    ""
                   )}
-                  {/* {timeOfDay === "afternoon" && slots.afternoon == [] ? (
-                    <h1>Sorry, No slots available !</h1>
+                  {timeOfDay === "afternoon" ? (
+                    slots.afternoon.length === 0 ? (
+                      <h1>Sorry, no slots available</h1>
+                    ) : (
+                      slots.afternoon.map((slot) => (
+                        <Button
+                          className={`${
+                            selectedTime === slot.time
+                              ? "bg-gradient-to-r from-cyan-500 to-blue-500 hover:opacity-90 text-white"
+                              : "bg-white text-black border-black-500 hover:bg-stone-400"
+                          }`}
+                          onClick={() => setSelectedTime(slot.time)}
+                          color="light"
+                          key={Math.random() * 10}
+                        >
+                          {slot.time}
+                        </Button>
+                      ))
+                    )
                   ) : (
-                    slots.afternoon.map((slot) => (
-                      <Button
-                        className={`${
-                          selectedTime === slot.time
-                            ? "bg-gradient-to-r from-cyan-500 to-blue-500 hover:opacity-90"
-                            : "bg-white text-black border-black-500 hover:bg-stone-400"
-                        }`}
-                        onClick={() => setSelectedTime(slot.time)}
-                        color="light"
-                      >
-                        {slot.time}
-                      </Button>
-                    ))
+                    ""
                   )}
-                  {timeOfDay === "evening" && slots.evening == [] ? (
-                    <h1>Sorry, No slots available !</h1>
+                  {timeOfDay === "evening" ? (
+                    slots.evening.length === 0 ? (
+                      <h1>Sorry, no slots available</h1>
+                    ) : (
+                      slots.evening.map((slot) => (
+                        <Button
+                          className={` hover:bg-red ${
+                            selectedTime === slot.time
+                              ? "bg-gradient-to-r from-cyan-500 to-blue-500 hover:opacity-20 text-white"
+                              : "bg-white text-black border-black-500"
+                          }`}
+                          onClick={() => setSelectedTime(slot.time)}
+                          color="light"
+                          key={Math.random() * 10}
+                        >
+                          {slot.time}
+                        </Button>
+                      ))
+                    )
                   ) : (
-                    slots.evening.map((slot) => (
-                      <Button
-                        className={` hover:bg-red ${
-                          selectedTime === slot.time
-                            ? "bg-gradient-to-r from-cyan-500 to-blue-500 hover:opacity-20"
-                            : "bg-white text-black border-black-500"
-                        }`}
-                        onClick={() => setSelectedTime(slot.time)}
-                        color="light"
-                      >
-                        {slot.time}
-                      </Button>
-                    ))
-                  )} */}
+                    ""
+                  )}
                 </div>
                 {selectedTime && (
                   <div className="flex justify-center mt-6">
                     <Button
                       gradientMonochrome="success"
-                      onClick={() => setConfirmed(true)}
+                      onClick={() => {
+                        tabsRef.current?.setActiveTab(1);
+                        setConfirmed(true);
+                      }}
                     >
                       Confirm
                     </Button>
@@ -301,7 +297,16 @@ const Patient = () => {
               </div>
             </Tabs.Item>
             <Tabs.Item disabled={!confirmed} active={confirmed} title="Remarks">
-              Disabled content
+              <div className="flex flex-col items-center gap-4 justify-center">
+                <Textarea
+                  id="comment"
+                  placeholder="Leave a remark..."
+                  required
+                  rows={6}
+                  className="w-1/2 max-sm:w-full"
+                />
+                <Button gradientMonochrome="success">Submit</Button>
+              </div>
             </Tabs.Item>
           </Tabs>
         </div>

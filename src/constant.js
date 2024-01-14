@@ -39,7 +39,7 @@ const physios = [
     name: "Dr. Williams",
     email: "dr.williams@example.com",
     slots: [
-      { date: "Mon, 15 Jan", start: "9", end: "12" },
+      { date: "Mon, 15 Jan", start: "9", end: "16" },
       { date: "Tue, 16 Jan", start: "8", end: "16" },
       { date: "Wed, 17 Jan", start: "8", end: "14" },
       { date: "Thu, 18 Jan", start: "15", end: "17" },

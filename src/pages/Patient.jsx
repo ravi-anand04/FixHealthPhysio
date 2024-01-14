@@ -10,69 +10,107 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 
-import React, { useState } from "react";
-import { dates } from "../constant";
-
-// Function to generate an array of time objects
-const generateTimeArray = (start, end) => {
-  const startTime = new Date();
-  startTime.setHours(start, 0, 0, 0); // Set start time to 8:00 am
-
-  const endTime = new Date();
-  endTime.setHours(end, 0, 0, 0); // Set end time to 12:00 pm
-
-  const timeArray = [];
-
-  // Loop through the time intervals with a 15-minute gap
-  for (
-    let currentTime = startTime;
-    currentTime < endTime;
-    currentTime.setMinutes(currentTime.getMinutes() + 15)
-  ) {
-    // Format the time as a string (12-hour clock with AM/PM)
-    const formattedTime = currentTime.toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
-
-    // Create an object with the formatted time
-    const timeObject = { time: formattedTime };
-
-    // Add the object to the array
-    timeArray.push(timeObject);
-  }
-
-  return timeArray;
-};
-
-const morningSlots = generateTimeArray(8, 12);
-const afternoonSlots = generateTimeArray(12, 15);
-const eveningSlots = generateTimeArray(15, 17);
-
-// console.log(morningSlots);
-// console.log(afternoonSlots);
-// console.log(eveningSlots);
-
-// PATIENT VIEW CODE
+import React, { useRef, useState } from "react";
+import { dates, physios } from "../constant";
+import { generateTimeArray } from "../utils/generateTimeArray";
 
 const Patient = () => {
-  const [selectedDate, setSelectedDate] = useState(0);
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedTime, setSelectedTime] = useState("");
+  const [timeOfDay, setTimeOfDay] = useState("morning");
+  const [confirmed, setConfirmed] = useState(false);
 
-  const handleClick = (index) => {
-    setSelectedDate(index);
+  const tabsRef = useRef(null);
+  const [activeTab, setActiveTab] = useState(0);
+
+  const [slots, setSlots] = useState({
+    morning: [],
+    afternoon: [],
+    evening: [],
+  });
+
+  const updateAvailableSlots = (e, date) => {
+    e.stopPropagation();
+    let start = 8,
+      end = 8;
+    // console.log("Selected date", selectedDate);
+    const currentSlots = physios.map((physio) => {
+      return physio.slots.filter((slot) => slot.date === date);
+    });
+
+    currentSlots.forEach((item) => {
+      if (item[0].start < start) {
+        start = item[0].start;
+        console.log("START", start, "ITEM-START", item[0].start);
+      }
+      if (item[0].end > end) {
+        end = item[0].end;
+      }
+      // console.log("END", end);
+    });
+
+    console.log("start ", start + " end ", end);
+    console.log("Today's slots", currentSlots);
+
+    // SLOTS DISTRIBUTION
+
+    let morningSlots = [];
+    let afternoonSlots = [];
+    let eveningSlots = [];
+
+    if (start < 12) {
+      if (end <= 12) {
+        morningSlots = generateTimeArray(start, end);
+        afternoonSlots = [];
+        eveningSlots = [];
+      } else if (end <= 15) {
+        morningSlots = generateTimeArray(start, 12);
+        afternoonSlots = generateTimeArray(12, end);
+        eveningSlots = [];
+      } else {
+        morningSlots = generateTimeArray(start, 12);
+        afternoonSlots = generateTimeArray(12, 15);
+        eveningSlots = generateTimeArray(15, end);
+      }
+    } else if (start < 15) {
+      if (end <= 15) {
+        morningSlots = [];
+        afternoonSlots = generateTimeArray(start, end);
+        eveningSlots = [];
+      } else {
+        morningSlots = [];
+        afternoonSlots = generateTimeArray(start, 15);
+        eveningSlots = generateTimeArray(15, end);
+      }
+    } else {
+      morningSlots = [];
+      afternoonSlots = [];
+      eveningSlots = generateTimeArray(start, end);
+    }
+
+    console.log("Morning", morningSlots);
+    console.log("afternoon", afternoonSlots);
+    console.log("evening", eveningSlots);
+
+    setSlots({
+      morning: morningSlots,
+      afternoon: afternoonSlots,
+      evening: eveningSlots,
+    });
+
+    setSelectedDate(date);
   };
 
   return (
-    <div className="px-48 max-lg:px-12 mt-6">
-      <h2 className="text-2xl font-bold mb-8">Patient View</h2>
-      <h1 className="text-lg text-center font-semibold">
-        Book your Physio appointments
-      </h1>
+    <div className="px-48 max-lg:px-12 mt-6 max-sm:px-2">
+      <h2 className="text-2xl font-bold mb-8 border-l-4 border-yellow-300 pl-2">
+        Book your appointment
+      </h2>
+
       <h1 className="font-semibold my-6">Select Date & Time</h1>
       <div className="day-select">
         <SwiperComponent
-          slidesPerView={1}
+          slidesPerView={3}
           spaceBetween={16}
           rewind={true}
           breakpoints={{
@@ -89,23 +127,28 @@ const Patient = () => {
               spaceBetween: 16,
             },
           }}
-          // navigation="true"
+          navigation={{
+            nextEl: ".custom_next",
+            prevEl: ".custom_prev",
+          }}
           modules={[Pagination, Navigation, Autoplay]}
           className="flex justify-center"
         >
-          {dates.map((item, index) => (
+          {dates.map((item) => (
             <SwiperSlide key={item.id}>
               <Card
                 href="#"
-                className={`w-sm cursor-pointer ${
-                  selectedDate === index
-                    ? "bg-gradient-to-r from-indigo-500 text-white"
+                className={`max-w-sm cursor-pointer max-sm:w-[150px] ${
+                  selectedDate === item.date
+                    ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white"
                     : "bg-white"
                 }`}
-                onClick={() => handleClick(index)}
+                onClick={(e) => updateAvailableSlots(e, item.date)}
               >
                 <h5
-                  className={`text-md text-center font-semibold tracking-tight text-gray-900  `}
+                  className={`${
+                    selectedDate === item.date ? "text-white" : "text-black"
+                  } text-md text-center font-semibold tracking-tight text-gray-900  `}
                 >
                   {item.date}
                 </h5>
@@ -119,38 +162,143 @@ const Patient = () => {
           aria-label="Default tabs"
           style="default"
           className="flex justify-around"
+          ref={tabsRef}
+          onActiveTabChange={(tab) => setActiveTab(tab)}
         >
-          <Tabs.Item active title="Patient Details">
+          <Tabs.Item title="Patient Details">
             This is{" "}
             <span className="font-medium text-gray-800 dark:text-white">
-              Profile tab's associated content
+              Patient tab's associated content
             </span>
             . Clicking another tab will toggle the visibility of this one for
-            the next. The tab JavaScript swaps classes to control the content
-            visibility and styling.
+            the next.
           </Tabs.Item>
-          <Tabs.Item title="Consultation Slot">
+          <Tabs.Item active title="Consultation Slot">
             <div className="flex flex-wrap gap-4 justify-center">
-              <Button className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:opacity-90 px-12">
+              <Button
+                onClick={() => setTimeOfDay("morning")}
+                className={`${
+                  timeOfDay === "morning"
+                    ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white"
+                    : "bg-white text-black"
+                }  hover:opacity-90 px-12`}
+                color="light"
+              >
                 Morning
               </Button>
-              <Button className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:opacity-90 px-12">
+              <Button
+                onClick={() => setTimeOfDay("afternoon")}
+                className={`${
+                  timeOfDay === "afternoon"
+                    ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white"
+                    : "bg-white text-black"
+                }  hover:opacity-90 px-12`}
+                color="light"
+              >
                 Afternoon
               </Button>
-              <Button className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:opacity-90 px-12">
+              <Button
+                onClick={() => setTimeOfDay("evening")}
+                className={`${
+                  timeOfDay === "evening"
+                    ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white"
+                    : "bg-white text-black"
+                }  hover:opacity-90 px-12`}
+                color="light"
+              >
                 Evening
               </Button>
             </div>
             <div className="slots">
               <div className="morning-slots flex flex-wrap justify-center gap-2 mt-8">
-                {morningSlots.map((slot) => (
-                  <Button color="light">{slot.time}</Button>
-                ))}
+                {timeOfDay === "morning" ? (
+                  slots.morning.length === 0 ? (
+                    <h1>Sorry, no slots available</h1>
+                  ) : (
+                    slots.morning.map((slot, index) => (
+                      <Button
+                        className={`${
+                          selectedTime === slot.time
+                            ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:opacity-90 text-white"
+                            : "bg-white text-black border-black-500 hover:bg-stone-400"
+                        }`}
+                        color="light"
+                        key={Math.random() * 10}
+                        onClick={() => setSelectedTime(slot.time)}
+                      >
+                        {slot.time}
+                      </Button>
+                    ))
+                  )
+                ) : (
+                  ""
+                )}
+                {timeOfDay === "afternoon" ? (
+                  slots.afternoon.length === 0 ? (
+                    <h1>Sorry, no slots available</h1>
+                  ) : (
+                    slots.afternoon.map((slot, index) => (
+                      <Button
+                        className={`${
+                          selectedTime === slot.time
+                            ? "bg-gradient-to-r from-cyan-500 to-blue-500 hover:opacity-90 text-white"
+                            : "bg-white text-black border-black-500 hover:bg-stone-400"
+                        }`}
+                        onClick={() => setSelectedTime(slot.time)}
+                        color="light"
+                        key={Math.random() * 10}
+                      >
+                        {slot.time}
+                      </Button>
+                    ))
+                  )
+                ) : (
+                  ""
+                )}
+                {timeOfDay === "evening" ? (
+                  slots.evening.length === 0 ? (
+                    <h1>Sorry, no slots available</h1>
+                  ) : (
+                    slots.evening.map((slot, index) => (
+                      <Button
+                        className={` hover:bg-red ${
+                          selectedTime === slot.time
+                            ? "bg-gradient-to-r from-cyan-500 to-blue-500 hover:opacity-20 text-white"
+                            : "bg-white text-black border-black-500"
+                        }`}
+                        onClick={() => setSelectedTime(slot.time)}
+                        color="light"
+                        key={Math.random() * 10}
+                      >
+                        {slot.time}
+                      </Button>
+                    ))
+                  )
+                ) : (
+                  ""
+                )}
               </div>
+              {selectedTime && (
+                <div className="flex justify-center mt-6">
+                  <Button
+                    gradientMonochrome="success"
+                    onClick={() => {
+                      tabsRef.current?.setActiveTab(2);
+                      setConfirmed(true);
+                    }}
+                  >
+                    Confirm
+                  </Button>
+                </div>
+              )}
             </div>
           </Tabs.Item>
-          <Tabs.Item disabled title="Review & Confirm">
-            Disabled content
+          <Tabs.Item
+            disabled={!confirmed}
+            active={confirmed}
+            title="Review & Confirm"
+          >
+            <h1 className="text-center">Review & Confirm</h1>
           </Tabs.Item>
         </Tabs>
       </div>
