@@ -3,6 +3,7 @@ import Physio from "./pages/Physio";
 import Operations from "./pages/Operations";
 import Patient from "./pages/Patient";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import Home from "./pages/Home";
 
 function App() {
   const [physios, setPhysios] = useState([
@@ -39,6 +40,7 @@ function App() {
             element={<Operations physios={physios} />}
           />
           <Route exact path="/patient" element={<Patient />} />
+          <Route path="/" element={<Home />} />
         </Routes>
       </Router>
     </div>

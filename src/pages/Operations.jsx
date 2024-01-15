@@ -12,7 +12,7 @@ import React, { useRef, useState } from "react";
 import { dates, physios } from "../constant";
 import { generateTimeArray } from "../utils/generateTimeArray";
 
-const Patient = () => {
+const Operations = () => {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [selectedPhysio, setSelectedPhysio] = useState("");
@@ -315,4 +315,4 @@ const Patient = () => {
   );
 };
 
-export default Patient;
+export default Operations;

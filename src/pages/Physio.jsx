@@ -5,23 +5,9 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { dates } from "../constant";
 
-const Physio = ({ onAvailabilitySelect }) => {
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [selectedTime, setSelectedTime] = useState(null);
-
-  const handleDateChange = (date) => {
-    setSelectedDate(date);
-    // You may want to fetch available times for the selected date from the server
-  };
-
-  const handleTimeChange = (time) => {
-    setSelectedTime(time);
-  };
-
-  const handleSaveAvailability = () => {
-    // Send selectedDate, selectedTime to the server and update physio's availability
-    onAvailabilitySelect(selectedDate, selectedTime);
-  };
+const Physio = () => {
+  // const [selectedDate, setSelectedDate] = useState(null);
+  // const [selectedTime, setSelectedTime] = useState(null);
 
   return (
     <div className="px-48 max-lg:px-12 my-8 max-sm:px-2">
