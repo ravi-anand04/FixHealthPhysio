@@ -170,8 +170,7 @@ const Patient = () => {
             <span className="font-medium text-gray-800 dark:text-white">
               Patient tab's associated content
             </span>
-            . Clicking another tab will toggle the visibility of this one for
-            the next.
+            . Clicking another tab will toggle the visibility of this one.
           </Tabs.Item>
           <Tabs.Item active title="Consultation Slot">
             <div className="flex flex-wrap gap-4 justify-center">
