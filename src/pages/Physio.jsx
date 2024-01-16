@@ -1,7 +1,9 @@
 // Physio.js
 import { Button, Dropdown } from "flowbite-react";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { dates } from "../constant";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const Physio = ({ physios, updatePhysios }) => {
   const [selectedPhysio, setSelectedPhysio] = useState({
@@ -10,10 +12,6 @@ const Physio = ({ physios, updatePhysios }) => {
     email: "",
     slots: [],
   });
-
-  // const btnClick = () => {
-  //   console.log("Selected Physio", selectedPhysio);
-  // };
 
   const handleTimeChange = (e, date, phase) => {
     setSelectedPhysio((prev) => {
@@ -41,10 +39,34 @@ const Physio = ({ physios, updatePhysios }) => {
     );
 
     updatePhysios(updatedPhysios);
+
+    toast.success("Save successful", {
+      position: "top-right",
+      autoClose: 5000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      theme: "dark",
+    });
   };
 
   return (
     <div className="px-36 max-xl:px-12 my-8 max-sm:px-2">
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
+
       {!selectedPhysio.id ? (
         <div>
           <h2 className="text-2xl font-bold mb-4 mt-12">
