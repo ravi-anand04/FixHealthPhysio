@@ -9,18 +9,18 @@ import "swiper/css/navigation";
 import "swiper/css/pagination";
 
 import React, { useRef, useState } from "react";
-import { dates, physios } from "../constant";
-import { generateTimeArray } from "../utils/generateTimeArray";
+import { dates } from "../constant";
+import generateTimeSlots from "../utils/generateTimeSlots";
 
-const Operations = () => {
+const Operations = ({ physios }) => {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
-  const [selectedPhysio, setSelectedPhysio] = useState("");
-  const [timeOfDay, setTimeOfDay] = useState("morning");
-  const [confirmed, setConfirmed] = useState(false);
-
-  const tabsRef = useRef(null);
-  const [activeTab, setActiveTab] = useState(0);
+  const [selectedPhysio, setSelectedPhysio] = useState({
+    id: "",
+    name: "",
+    email: "",
+    slots: [],
+  });
 
   const [slots, setSlots] = useState({
     morning: [],
@@ -28,9 +28,15 @@ const Operations = () => {
     evening: [],
   });
 
+  const [timeOfDay, setTimeOfDay] = useState("morning");
+  const [confirmed, setConfirmed] = useState(false);
+
+  const tabsRef = useRef(null);
+  const [activeTab, setActiveTab] = useState(0);
+
   const handleClick = (date) => {
     setSelectedDate(date);
-    changePhysio(selectedPhysio);
+    // changePhysio(selectedPhysio.name);
   };
 
   const changePhysio = (name) => {
@@ -38,55 +44,20 @@ const Operations = () => {
     const currentPhysioSlots = currentPhysio?.slots?.find(
       (slot) => slot.date === selectedDate
     );
-    // console.log("William slots", currentPhysioSlots);
 
-    const start = currentPhysioSlots?.start;
-    const end = currentPhysioSlots?.end;
+    const { morning, afternoon, evening } = currentPhysioSlots;
 
-    let morningSlots = [];
-    let afternoonSlots = [];
-    let eveningSlots = [];
-
-    if (start < 12) {
-      if (end <= 12) {
-        morningSlots = generateTimeArray(start, end);
-        afternoonSlots = [];
-        eveningSlots = [];
-      } else if (end <= 15) {
-        morningSlots = generateTimeArray(start, 12);
-        afternoonSlots = generateTimeArray(12, end);
-        eveningSlots = [];
-      } else {
-        morningSlots = generateTimeArray(start, 12);
-        afternoonSlots = generateTimeArray(12, 15);
-        eveningSlots = generateTimeArray(15, end);
-      }
-    } else if (start < 15) {
-      if (end <= 15) {
-        morningSlots = [];
-        afternoonSlots = generateTimeArray(start, end);
-        eveningSlots = [];
-      } else {
-        morningSlots = [];
-        afternoonSlots = generateTimeArray(start, 15);
-        eveningSlots = generateTimeArray(15, end);
-      }
-    } else {
-      morningSlots = [];
-      afternoonSlots = [];
-      eveningSlots = generateTimeArray(start, end);
-    }
-
-    console.log("Morning", morningSlots);
-    console.log("afternoon", afternoonSlots);
-    console.log("evening", eveningSlots);
+    const morningSlots = generateTimeSlots(morning.start, morning.end);
+    const afternoonSlots = generateTimeSlots(afternoon.start, afternoon.end);
+    const eveningSlots = generateTimeSlots(evening.start, evening.end);
 
     setSlots({
       morning: morningSlots,
       afternoon: afternoonSlots,
       evening: eveningSlots,
     });
-    setSelectedPhysio(name);
+
+    setSelectedPhysio(currentPhysio);
   };
 
   return (
@@ -94,9 +65,7 @@ const Operations = () => {
       <h2 className="text-2xl font-bold mb-8 border-l-4 border-yellow-300 pl-2">
         Operations
       </h2>
-      {/* <h1 className="text-lg text-center font-semibold">
-        Book your Physio appointments
-      </h1> */}
+
       <h1 className="font-semibold text-xl my-6">Select Date & Time</h1>
       <div className="day-select">
         <SwiperComponent
@@ -146,7 +115,7 @@ const Operations = () => {
       </div>
       <div className="select-employee mt-6">
         <Dropdown
-          label={selectedPhysio ? selectedPhysio : "Select Physio"}
+          label={selectedPhysio.id ? selectedPhysio.name : "Select Physio"}
           // dismissOnClick={false}
           color="gray"
         >
@@ -166,8 +135,63 @@ const Operations = () => {
           </h1>
         )}
       </div>
-      {selectedPhysio && (
-        <div className="slots mt-12">
+      {selectedPhysio.id && (
+        <div className="slots mt-8">
+          <div className="timing-summary my-6">
+            <h1 className="text-lg font-semibold">
+              Morning :{" "}
+              <span className="text-lg font-light">
+                Start:{" "}
+                {
+                  selectedPhysio.slots.find(
+                    (slot) => slot.date === selectedDate
+                  ).morning.start
+                }
+                , End:{" "}
+                {
+                  selectedPhysio.slots.find(
+                    (slot) => slot.date === selectedDate
+                  ).morning.end
+                }
+              </span>
+            </h1>
+
+            <h1 className="text-lg font-semibold">
+              Afternoon :{" "}
+              <span className="text-lg font-light">
+                {" "}
+                Start:{" "}
+                {
+                  selectedPhysio.slots.find(
+                    (slot) => slot.date === selectedDate
+                  ).afternoon.start
+                }
+                , End:{" "}
+                {
+                  selectedPhysio.slots.find(
+                    (slot) => slot.date === selectedDate
+                  ).afternoon.end
+                }
+              </span>
+            </h1>
+            <h1 className="text-lg font-semibold">
+              Evening :{" "}
+              <span className="text-lg font-light">
+                Start:{" "}
+                {
+                  selectedPhysio.slots.find(
+                    (slot) => slot.date === selectedDate
+                  ).evening.start
+                }
+                , End:{" "}
+                {
+                  selectedPhysio.slots.find(
+                    (slot) => slot.date === selectedDate
+                  ).evening.end
+                }
+              </span>
+            </h1>
+          </div>
           <Tabs
             aria-label="Default tabs"
             style="default"
@@ -221,15 +245,15 @@ const Operations = () => {
                       slots.morning.map((slot) => (
                         <Button
                           className={`${
-                            selectedTime === slot.time
+                            selectedTime === slot
                               ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:opacity-90 text-white"
                               : "bg-white text-black border-black-500 hover:bg-stone-400"
                           }`}
                           color="light"
                           key={Math.random() * 10}
-                          onClick={() => setSelectedTime(slot.time)}
+                          onClick={() => setSelectedTime(slot)}
                         >
-                          {slot.time}
+                          {slot}
                         </Button>
                       ))
                     )
@@ -243,15 +267,15 @@ const Operations = () => {
                       slots.afternoon.map((slot) => (
                         <Button
                           className={`${
-                            selectedTime === slot.time
+                            selectedTime === slot
                               ? "bg-gradient-to-r from-cyan-500 to-blue-500 hover:opacity-90 text-white"
                               : "bg-white text-black border-black-500 hover:bg-stone-400"
                           }`}
-                          onClick={() => setSelectedTime(slot.time)}
+                          onClick={() => setSelectedTime(slot)}
                           color="light"
                           key={Math.random() * 10}
                         >
-                          {slot.time}
+                          {slot}
                         </Button>
                       ))
                     )
@@ -265,15 +289,15 @@ const Operations = () => {
                       slots.evening.map((slot) => (
                         <Button
                           className={` hover:bg-red ${
-                            selectedTime === slot.time
+                            selectedTime === slot
                               ? "bg-gradient-to-r from-cyan-500 to-blue-500 hover:opacity-20 text-white"
                               : "bg-white text-black border-black-500"
                           }`}
-                          onClick={() => setSelectedTime(slot.time)}
+                          onClick={() => setSelectedTime(slot)}
                           color="light"
                           key={Math.random() * 10}
                         >
-                          {slot.time}
+                          {slot}
                         </Button>
                       ))
                     )

@@ -11,91 +11,61 @@ import "swiper/css/navigation";
 import "swiper/css/pagination";
 
 import React, { useRef, useState } from "react";
-import { dates, physios } from "../constant";
-import { generateTimeArray } from "../utils/generateTimeArray";
+import { dates } from "../constant";
+import generateTimeSlots from "../utils/generateTimeSlots";
 
-const Patient = () => {
+const Patient = ({ physios }) => {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
-  const [timeOfDay, setTimeOfDay] = useState("morning");
-  const [confirmed, setConfirmed] = useState(false);
-
-  const tabsRef = useRef(null);
-  const [activeTab, setActiveTab] = useState(0);
-
   const [slots, setSlots] = useState({
     morning: [],
     afternoon: [],
     evening: [],
   });
 
+  const [timeOfDay, setTimeOfDay] = useState("morning");
+  const [confirmed, setConfirmed] = useState(false);
+
+  const tabsRef = useRef(null);
+  const [activeTab, setActiveTab] = useState(0);
+
   const updateAvailableSlots = (e, date) => {
     e.stopPropagation();
-    let start = 8,
-      end = 8;
-    // console.log("Selected date", selectedDate);
-    const currentSlots = physios.map((physio) => {
-      return physio.slots.filter((slot) => slot.date === date);
-    });
 
-    currentSlots.forEach((item) => {
-      if (item[0].start < start) {
-        start = item[0].start;
-        console.log("START", start, "ITEM-START", item[0].start);
-      }
-      if (item[0].end > end) {
-        end = item[0].end;
-      }
-      // console.log("END", end);
-    });
+    physios.forEach((physio) => {
+      physio.slots.forEach((slot) => {
+        const morningSlots = generateTimeSlots(
+          slot.morning.start,
+          slot.morning.end
+        );
+        const afternoonSlots = generateTimeSlots(
+          slot.afternoon.start,
+          slot.afternoon.end
+        );
+        const eveningSlots = generateTimeSlots(
+          slot.evening.start,
+          slot.evening.end
+        );
 
-    console.log("start ", start + " end ", end);
-    console.log("Today's slots", currentSlots);
-
-    // SLOTS DISTRIBUTION
-
-    let morningSlots = [];
-    let afternoonSlots = [];
-    let eveningSlots = [];
-
-    if (start < 12) {
-      if (end <= 12) {
-        morningSlots = generateTimeArray(start, end);
-        afternoonSlots = [];
-        eveningSlots = [];
-      } else if (end <= 15) {
-        morningSlots = generateTimeArray(start, 12);
-        afternoonSlots = generateTimeArray(12, end);
-        eveningSlots = [];
-      } else {
-        morningSlots = generateTimeArray(start, 12);
-        afternoonSlots = generateTimeArray(12, 15);
-        eveningSlots = generateTimeArray(15, end);
-      }
-    } else if (start < 15) {
-      if (end <= 15) {
-        morningSlots = [];
-        afternoonSlots = generateTimeArray(start, end);
-        eveningSlots = [];
-      } else {
-        morningSlots = [];
-        afternoonSlots = generateTimeArray(start, 15);
-        eveningSlots = generateTimeArray(15, end);
-      }
-    } else {
-      morningSlots = [];
-      afternoonSlots = [];
-      eveningSlots = generateTimeArray(start, end);
-    }
-
-    console.log("Morning", morningSlots);
-    console.log("afternoon", afternoonSlots);
-    console.log("evening", eveningSlots);
-
-    setSlots({
-      morning: morningSlots,
-      afternoon: afternoonSlots,
-      evening: eveningSlots,
+        setSlots((prev) => {
+          const uniqueMorningSlots = Array.from(
+            new Set([...prev.morning, ...morningSlots])
+          );
+          const uniqueAfternoonSlots = Array.from(
+            new Set([...prev.afternoon, ...afternoonSlots])
+          );
+          const uniqueEveningSlots = Array.from(
+            new Set([...prev.evening, ...eveningSlots])
+          );
+          console.log("unique", uniqueMorningSlots);
+          return {
+            ...prev,
+            morning: uniqueMorningSlots,
+            afternoon: uniqueAfternoonSlots,
+            evening: uniqueEveningSlots,
+          };
+        });
+      });
     });
 
     setSelectedDate(date);
@@ -214,18 +184,18 @@ const Patient = () => {
                   slots.morning.length === 0 ? (
                     <h1>Sorry, no slots available</h1>
                   ) : (
-                    slots.morning.map((slot, index) => (
+                    slots.morning.map((slot) => (
                       <Button
                         className={`${
-                          selectedTime === slot.time
+                          selectedTime === slot
                             ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:opacity-90 text-white"
                             : "bg-white text-black border-black-500 hover:bg-stone-400"
                         }`}
                         color="light"
                         key={Math.random() * 10}
-                        onClick={() => setSelectedTime(slot.time)}
+                        onClick={() => setSelectedTime(slot)}
                       >
-                        {slot.time}
+                        {slot}
                       </Button>
                     ))
                   )
@@ -236,18 +206,18 @@ const Patient = () => {
                   slots.afternoon.length === 0 ? (
                     <h1>Sorry, no slots available</h1>
                   ) : (
-                    slots.afternoon.map((slot, index) => (
+                    slots.afternoon.map((slot) => (
                       <Button
                         className={`${
-                          selectedTime === slot.time
+                          selectedTime === slot
                             ? "bg-gradient-to-r from-cyan-500 to-blue-500 hover:opacity-90 text-white"
                             : "bg-white text-black border-black-500 hover:bg-stone-400"
                         }`}
-                        onClick={() => setSelectedTime(slot.time)}
+                        onClick={() => setSelectedTime(slot)}
                         color="light"
                         key={Math.random() * 10}
                       >
-                        {slot.time}
+                        {slot}
                       </Button>
                     ))
                   )
@@ -258,18 +228,18 @@ const Patient = () => {
                   slots.evening.length === 0 ? (
                     <h1>Sorry, no slots available</h1>
                   ) : (
-                    slots.evening.map((slot, index) => (
+                    slots.evening.map((slot) => (
                       <Button
                         className={` hover:bg-red ${
-                          selectedTime === slot.time
+                          selectedTime === slot
                             ? "bg-gradient-to-r from-cyan-500 to-blue-500 hover:opacity-20 text-white"
                             : "bg-white text-black border-black-500"
                         }`}
-                        onClick={() => setSelectedTime(slot.time)}
+                        onClick={() => setSelectedTime(slot)}
                         color="light"
                         key={Math.random() * 10}
                       >
-                        {slot.time}
+                        {slot}
                       </Button>
                     ))
                   )

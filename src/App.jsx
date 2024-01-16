@@ -4,26 +4,17 @@ import Operations from "./pages/Operations";
 import Patient from "./pages/Patient";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import Home from "./pages/Home";
+import { employees } from "./constant";
 
 function App() {
-  const [physios, setPhysios] = useState([
-    { id: 1, name: "Physio 1" },
-    { id: 2, name: "Physio 2" },
-    // ... other physios ...
-  ]);
+  const [physios, setPhysios] = useState(employees);
 
-  const [availableSlots, setAvailableSlots] = useState([
-    { id: 1, day: "Monday", time: "5:30 AM" },
-    // ... other available slots ...
-  ]);
-
-  const handleAvailabilitySelect = (selectedDate, selectedTime) => {
-    // Update the available slots based on the selected date and time
-    setAvailableSlots([
-      ...availableSlots,
-      { id: Date.now(), day: selectedDate, time: selectedTime },
-    ]);
+  const updatePhysios = (updatedPhysios) => {
+    console.log("Mil gaya");
+    setPhysios(updatedPhysios);
   };
+
+  console.log("New Timings", physios);
 
   return (
     <div>
@@ -32,14 +23,18 @@ function App() {
           <Route
             exact
             path="/physio"
-            element={<Physio onAvailabilitySelect={handleAvailabilitySelect} />}
+            element={<Physio physios={physios} updatePhysios={updatePhysios} />}
           />
           <Route
             exact
             path="/operations"
             element={<Operations physios={physios} />}
           />
-          <Route exact path="/patient" element={<Patient />} />
+          <Route
+            exact
+            path="/patient"
+            element={<Patient physios={physios} />}
+          />
           <Route path="/" element={<Home />} />
         </Routes>
       </Router>
